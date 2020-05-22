@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sender</title>
+    <style>
+        input, textarea, body {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #e9ecef;
+        }
+
+        textarea, input {
+            outline: none;
+        }
+
+        .sender {
+            box-sizing: border-box;
+            width: 1000px;
+            max-width: 100%;
+            min-height: 100vh;
+            margin: 0 auto;
+            padding: 16px 16px;
+            background: #fff;
+        }
+
+        .sender textarea {
+            display: block;
+            width: 100%;
+            line-height: 20px;
+        }
+
+        .message-type {
+            margin: 16px 0;
+        }
+
+        .message-type label {
+            display: inline-block;
+            margin-right: 16px;
+        }
+
+        .message-type input {
+            margin-right: 8px;
+            vertical-align: -1px;
+        }
+    </style>
+</head>
+<body>
+<div class="sender">
+    <section>
+        <label>
+            <textarea id="textEle" rows="5"></textarea>
+        </label>
+    </section>
+
+    <section class="message-type">
+        <label><input name="messageType" type="radio" value="1" checked/>普通消息</label>
+        <label><input name="messageType" type="radio" value="3"/>URL</label>
+        <label><input name="messageType" type="radio" value="4"/>Copy</label>
+        <label><input name="messageType" type="radio" value="5"/>Auto Copy</label>
+        <label><input name="messageType" type="radio" value="6"/>message</label>
+    </section>
+
+    <section class="messages">
+        <ul>
+            <li></li>
+        </ul>
+    </section>
+
+    <section>
+        <button id="sendBtn">发送</button>
+    </section>
+</div>
+</body>
+<script>
+    const sendBtnEle = document.getElementById('sendBtn')
+    const textEle = document.getElementById('textEle')
+    const messageTypeElements = document.getElementsByName('messageType')
+
+    sendBtnEle.onclick = function () {
+        const text = textEle.value
+        if (text) {
+            fetch(formatAPI(text))
+                .then(response => response.json())
+                .then(result => {
+                    if (result.code === 200) {
+                        textEle.value = ''
+                    } else {
+                        console.error('发送失败', result)
+                    }
+                })
+                .catch(error => console.error('发送失败', error))
+        }
+    }
+
+    function getCheckedValue(elements) {
+        for (const elem of elements) {
+            if (elem.checked === true) {
+                return elem.value
+            }
+        }
+        return null
+    }
+
+    function formatAPI(text) {
+        let baseURL = 'https://api.day.app/r3DcyugfF2CDevzBfBuuzb/'
+        const messageType = getCheckedValue(messageTypeElements)
+        switch (messageType) {
+            case '1':
+                baseURL += text
+                break
+            case '3':
+                baseURL += 'URL' + '?url=' + text
+                break
+            case '4':
+                baseURL += text + '?copy=' + text
+                break
+            case '5':
+                baseURL += text + '?automaticallyCopy=1&copy=' + text
+                break
+            case '6':
+                baseURL += text + '?automaticallyCopy=1&copy=' + text
+                break
+        }
+        return baseURL
+    }
+</script>
+</html>
