@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Sender</title>
     <style>
-        input, textarea, body {
+        input,
+        textarea,
+        body {
             margin: 0;
             padding: 0;
         }
@@ -13,7 +16,8 @@
             background: #e9ecef;
         }
 
-        textarea, input {
+        textarea,
+        input {
             outline: none;
         }
 
@@ -48,51 +52,94 @@
         }
     </style>
 </head>
+
 <body>
-<div class="sender">
-    <section>
-        <label>
-            <textarea id="textEle" rows="5"></textarea>
-        </label>
-    </section>
+    <div class="sender">
+        <section>
+            <label>
+                <textarea id="textEle" rows="5"></textarea>
+            </label>
+        </section>
 
-    <section class="message-type">
-        <label><input name="messageType" type="radio" value="1" checked/>普通消息</label>
-        <label><input name="messageType" type="radio" value="3"/>URL</label>
-        <label><input name="messageType" type="radio" value="4"/>Copy</label>
-        <label><input name="messageType" type="radio" value="5"/>Auto Copy</label>
-        <label><input name="messageType" type="radio" value="6"/>message</label>
-    </section>
+        <section class="message-type">
+            <label><input name="messageType" type="radio" value="1" checked />普通消息</label>
+            <label><input name="messageType" type="radio" value="3" />URL</label>
+            <label><input name="messageType" type="radio" value="4" />Copy</label>
+            <label><input name="messageType" type="radio" value="5" />Auto Copy</label>
+            <label><input name="messageType" type="radio" value="6" />message</label>
+        </section>
 
-    <section class="messages">
-        <ul>
-            <li></li>
+        <section>
+            <button id="sendBtn">发送</button>
+        </section>
+
+        <ul id="messagesBox">
         </ul>
-    </section>
-
-    <section>
-        <button id="sendBtn">发送</button>
-    </section>
-</div>
+    </div>
 </body>
 <script>
     const sendBtnEle = document.getElementById('sendBtn')
     const textEle = document.getElementById('textEle')
     const messageTypeElements = document.getElementsByName('messageType')
+    const messagesBoxEle = document.getElementById('messagesBox')
+    const liEle = document.createElement('li')
+
+    const messages = getLocalMessages()
+
+    renderMessages(messages)
+
+    function getLocalMessages() {
+        const messages = window.localStorage.getItem('messages')
+        if (messages) {
+            try {
+                return JSON.parse(messages)
+            } catch (e) {
+                console.error(e)
+                return []
+            }
+        }
+        return []
+        
+    }
+
+    function saveMessageItemOnLocal(message) {
+        messages.push(message)
+        window.localStorage.setItem('messages', JSON.stringify(messages))
+    }
+
+    function renderMessageItem(message) {
+        liEle.textContent = message
+        messagesBoxEle.append(liEle)
+    }
+
+    function renderMessages(messages) {
+        messagesBoxEle.innerHTML = messages.map(message => `<li>${message}</li>`).join(' ')
+    }
+
+    function send (message) {
+        fetch(formatAPI(message))
+            .then(response => response.json())
+            .then(result => {
+                if (result.code === 200) {
+                    textEle.value = ''
+                    saveMessageItemOnLocal(message)
+                    renderMessageItem(message)
+                } else {
+                    console.error('发送失败', result)
+                }
+            })
+            .catch(error => console.error('发送失败', error))
+    }
 
     sendBtnEle.onclick = function () {
         const text = textEle.value
-        if (text) {
-            fetch(formatAPI(text))
-                .then(response => response.json())
-                .then(result => {
-                    if (result.code === 200) {
-                        textEle.value = ''
-                    } else {
-                        console.error('发送失败', result)
-                    }
-                })
-                .catch(error => console.error('发送失败', error))
+        text && send(text)
+    }
+
+    messagesBoxEle.onclick = function (e) {
+        const { nodeName, innerText } = e.target
+        if (nodeName.toLowerCase() === 'li') {
+            send(innerText)
         }
     }
 
@@ -128,4 +175,5 @@
         return baseURL
     }
 </script>
+
 </html>
